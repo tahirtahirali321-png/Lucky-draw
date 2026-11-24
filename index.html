@@ -580,19 +580,4 @@
         if (newNum) appData.number = newNum;
         if (newTitle) appData.title = newTitle;
         saveData();
-        render();
-        alert("Account updated.");
-      });
-
-      document.getElementById("resetEntriesBtn").addEventListener("click", function () {
-        appData.entries = initialEntries.slice();
-        saveData();
-        render();
-        alert("Entries reset.");
-      });
-
-      render();
-    })();
-  </script>
-</body>
-</html>
+        render

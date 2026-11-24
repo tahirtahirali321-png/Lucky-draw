@@ -1,142 +1,344 @@
 <!DOCTYPE html>
-<html lang="ur" dir="auto">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>طاہر عباس — Lucky Draw</title>
+  <title>طاہر عباس — LUCKY DRAW</title>
   <style>
-    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
     body {
       margin: 0;
-      background: #0f172a;
-      color: #f8fafc;
-      padding: 16px;
+      background: #eaf7ee;
+      color: #0f172a;
+      padding-bottom: 36px;
     }
-    .wrap { max-width: 680px; margin: 0 auto; }
-    .card {
-      background: #1e293b;
-      border: 1px solid #334155;
-      border-radius: 14px;
+    .topbar {
+      background: #064e3b;
+      color: #ffffff;
       padding: 16px;
-      margin-bottom: 14px;
-    }
-    .header {
       text-align: center;
+      border-bottom: 3px solid #f59e0b;
       cursor: pointer;
       user-select: none;
     }
-    .brand { font-size: 26px; font-weight: 800; color: #fbbf24; margin: 4px 0; }
-    .sub { color: #94a3b8; font-size: 14px; margin: 0; }
-    h2 { font-size: 18px; margin: 0 0 12px; color: #38bdf8; }
-    .tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .tier {
-      background: #0f172a;
-      border: 1px solid #475569;
-      border-radius: 10px;
-      padding: 12px;
-      cursor: pointer;
-    }
-    .tier.active { border-color: #fbbf24; background: #292524; }
-    .tier-title { font-weight: 700; font-size: 15px; }
-    .tier-price { color: #fbbf24; font-weight: 700; margin-top: 4px; }
-    label { display: block; font-size: 13px; color: #cbd5e1; margin: 10px 0 4px; }
-    input, select {
-      width: 100%;
-      padding: 10px 12px;
-      border-radius: 8px;
-      border: 1px solid #475569;
-      background: #0f172a;
-      color: #fff;
-      font-size: 15px;
-    }
-    button {
-      margin-top: 14px;
-      width: 100%;
-      padding: 12px;
-      border: 0;
-      border-radius: 10px;
-      background: #fbbf24;
-      color: #0f172a;
+    .brand-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 24px;
       font-weight: 800;
+      letter-spacing: 0.4px;
+    }
+    .diamond {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid #fbbf24;
+      background: #065f46;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fbbf24;
+      font-size: 16px;
+      font-weight: 900;
+    }
+    .enter-btn {
+      margin-top: 12px;
+      width: 100%;
+      max-width: 560px;
+      background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+      color: #0f172a;
+      border: 1px solid #d97706;
+      border-radius: 999px;
+      padding: 11px 18px;
       font-size: 15px;
+      font-weight: 800;
       cursor: pointer;
     }
-    button.secondary { background: #334155; color: #f8fafc; margin-top: 8px; }
-    button.danger { background: #dc2626; color: #fff; margin-top: 8px; }
-    .slip {
-      background: #0f172a;
-      border: 1px dashed #fbbf24;
+    .container {
+      max-width: 600px;
+      margin: 14px auto 0;
+      padding: 0 12px;
+    }
+    .card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 15px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 14px rgba(6, 78, 59, 0.08);
+      border: 1px solid #d1fae5;
+    }
+    .card-title {
+      font-size: 16px;
+      font-weight: 800;
+      color: #064e3b;
+      margin: 0 0 4px;
+    }
+    .card-sub {
+      font-size: 12px;
+      color: #475569;
+      margin: 0 0 12px;
+    }
+    .account-box {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+    .acc-tag { font-size: 11px; font-weight: 800; color: #047857; text-transform: uppercase; }
+    .acc-num { font-size: 18px; font-weight: 900; color: #0f172a; margin: 2px 0; }
+    .acc-title { font-size: 12px; color: #334155; font-weight: 600; }
+    .copy-btn {
+      background: #ffffff;
+      color: #064e3b;
+      border: 1px solid #10b981;
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .tiers-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .tier-card {
+      background: #ffffff;
+      border-radius: 14px;
+      padding: 12px;
+      border: 2px solid #d1fae5;
+      box-shadow: 0 4px 12px rgba(6, 78, 59, 0.06);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .tier-card.selected {
+      border-color: #f59e0b;
+      background: #fffbeb;
+    }
+    .tier-img {
+      width: 100%;
+      height: 105px;
+      border-radius: 10px;
+      object-fit: cover;
+      background: #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .tier-label { font-size: 10px; font-weight: 800; color: #b45309; text-transform: uppercase; }
+    .tier-name { font-size: 15px; font-weight: 800; color: #0f172a; margin: 2px 0; }
+    .tier-spec { font-size: 11px; color: #475569; margin-bottom: 8px; }
+    .fee-badge {
+      display: inline-block;
+      background: #065f46;
+      color: #ffffff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 5px 9px;
+      border-radius: 8px;
+    }
+    .selected-txt {
+      margin-top: 6px;
+      font-size: 11px;
+      font-weight: 800;
+      color: #047857;
+    }
+    .active-tier-banner {
+      font-size: 12px;
+      font-weight: 700;
+      color: #047857;
+      margin-bottom: 10px;
+    }
+    .field {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      margin-bottom: 10px;
+      background: #ffffff;
+      color: #0f172a;
+    }
+    .terms-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #334155;
+      margin-bottom: 12px;
+    }
+    .terms-row a { color: #065f46; font-weight: 700; }
+    .gold-btn {
+      width: 100%;
+      background: linear-gradient(180deg, #fbbf24 0%, #f59e0b 100%);
+      color: #0f172a;
+      border: 1px solid #d97706;
       border-radius: 10px;
       padding: 12px;
-      margin-top: 10px;
+      font-size: 15px;
+      font-weight: 800;
+      cursor: pointer;
     }
-    .muted { color: #94a3b8; font-size: 13px; }
+    .slip-box {
+      margin-top: 12px;
+      background: #f0fdf4;
+      border: 1px dashed #059669;
+      border-radius: 10px;
+      padding: 12px;
+      font-size: 13px;
+      color: #064e3b;
+    }
+    .entry-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      background: #f8fafc;
+      border-radius: 10px;
+      border: 1px solid #e2e8f0;
+      margin-bottom: 8px;
+    }
+    .entry-name { font-size: 14px; font-weight: 700; color: #0f172a; }
+    .entry-sub { font-size: 11px; color: #64748b; }
+    .code-pill {
+      background: #fef3c7;
+      color: #92400e;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+    .code-pill.silver {
+      background: #e0f2fe;
+      color: #075985;
+    }
+    .admin-row {
+      display: flex;
+      gap: 8px;
+    }
     .hidden { display: none; }
+    .btn-dark {
+      background: #064e3b;
+      color: #ffffff;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .btn-red {
+      background: #dc2626;
+      color: #ffffff;
+      border: 0;
+      border-radius: 8px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+    }
     #errBox {
       display: none;
-      background: #7f1d1d;
-      color: #fecaca;
+      background: #fef2f2;
+      color: #991b1b;
       border: 1px solid #f87171;
-      padding: 12px;
+      padding: 10px 12px;
       border-radius: 10px;
-      margin-bottom: 12px;
-      white-space: pre-wrap;
-      font-size: 13px;
+      margin: 12px;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div id="errBox"></div>
+  <div id="errBox"></div>
 
-    <div class="card header" id="brandHeader" title="Admin ke liye 5 baar tap karein">
-      <div class="brand">طاہر عباس</div>
-      <p class="sub">Lucky Draw Entry &amp; Slip Portal</p>
+  <header class="topbar" id="topBrand" title="Tap 5 times for Admin">
+    <div class="brand-row">
+      <span class="diamond">◆</span>
+      <span>LUCKY DRAW</span>
     </div>
-
-    <div class="card">
-      <h2>1. Prize Tier Chunein</h2>
-      <div class="tiers" id="tiersBox"></div>
+    <div>
+      <button type="button" class="enter-btn" id="enterDrawBtn">Enter Draw</button>
     </div>
+  </header>
 
-    <div class="card">
-      <h2>2. Payment Accounts</h2>
-      <div id="accountsBox" class="muted"></div>
-    </div>
+  <main class="container">
+    <section class="card hidden" id="adminLoginCard">
+      <h2 class="card-title">Admin Login</h2>
+      <p class="card-sub">Enter the 8-digit PIN to continue.</p>
+      <div class="admin-row">
+        <input type="password" id="adminPinInput" class="field" placeholder="8-digit PIN" style="margin-bottom:0;" />
+        <button type="button" class="gold-btn" id="unlockAdminBtn" style="width:auto; padding:0 18px;">Unlock</button>
+      </div>
+      <div id="adminControls" class="hidden" style="margin-top:12px;">
+        <label style="font-size:12px; font-weight:700; color:#064e3b;">JazzCash Number &amp; Title</label>
+        <input type="text" id="editAccountNum" class="field" placeholder="03442900408" />
+        <input type="text" id="editAccountTitle" class="field" placeholder="Tahir Abbas" />
+        <button type="button" class="btn-dark" id="saveAccountBtn">Save Account Details</button>
+        <button type="button" class="btn-red" id="resetEntriesBtn">Reset All Entries</button>
+      </div>
+    </section>
 
-    <div class="card">
-      <h2>3. Entry Slip Banayein</h2>
-      <label for="userName">Poora Naam</label>
-      <input id="userName" type="text" placeholder="Apna naam likhein" />
+    <section class="card">
+      <h2 class="card-title">Pay Your Entry Fee</h2>
+      <p class="card-sub">Send the fee to official account below.</p>
+      <div class="account-box">
+        <div>
+          <div class="acc-tag" id="dispMethod">JAZZCASH</div>
+          <div class="acc-num" id="dispNumber">03442900408</div>
+          <div class="acc-title" id="dispTitle">Title: Tahir Abbas</div>
+        </div>
+        <button type="button" class="copy-btn" id="copyNumBtn">Copy Number</button>
+      </div>
+    </section>
 
-      <label for="userPhone">Phone / WhatsApp Number</label>
-      <input id="userPhone" type="text" placeholder="03xx / +9665x..." />
+    <section class="tiers-grid" id="tiersContainer"></section>
 
-      <label for="payMethod">Payment Method</label>
-      <select id="payMethod"></select>
+    <section class="card" id="slipFormCard">
+      <h2 class="card-title">Get Your Digital Slip</h2>
+      <div class="active-tier-banner" id="activeTierText">Joining Mobile Phone Tier (Redmi 14C)</div>
 
-      <label for="trxId">Transaction ID / Reference</label>
-      <input id="trxId" type="text" placeholder="Trx ID ya receipt number" />
+      <input type="text" id="fullName" class="field" placeholder="Your name" />
+      <input type="text" id="waNumber" class="field" placeholder="Whatsapp number (03XXXXXXXXX)" />
+      <input type="text" id="trxId" class="field" placeholder="Transaction ID (TRX ID)" />
 
-      <button id="submitBtn" type="button">Generate Slip</button>
-      <div id="latestSlip"></div>
-    </div>
+      <div class="terms-row">
+        <input type="checkbox" id="termsCheck" />
+        <label for="termsCheck">I agree to the Terms &amp; Conditions. <a href="#terms" id="termsLink">View Terms &amp; Conditions</a></label>
+      </div>
 
-    <div class="card">
-      <h2>Meri Slips</h2>
-      <div id="slipsList" class="muted">Abhi koi slip darj nahi hai.</div>
-    </div>
+      <button type="button" class="gold-btn" id="genSlipBtn">Generate Digital Slip</button>
+      <div id="latestSlipBox"></div>
+    </section>
 
-    <div class="card hidden" id="adminPanel">
-      <h2>Admin Panel (PIN: 10203040)</h2>
-      <label for="adminAccounts">Payment Accounts (har line aik account)</label>
-      <input id="adminAccounts" type="text" />
+    <section class="card">
+      <h2 class="card-title">Recent Entries</h2>
+      <div id="recentEntriesList"></div>
+    </section>
 
-      <button id="saveAdminBtn" type="button">Save Settings</button>
-      <button id="clearSlipsBtn" type="button" class="danger">Clear All Slips</button>
-      <button id="closeAdminBtn" type="button" class="secondary">Close Admin</button>
-    </div>
-  </div>
+    <section class="card">
+      <h2 class="card-title">Live Draw Participants</h2>
+      <div id="participantsList"></div>
+    </section>
+
+    <section class="card" id="terms">
+      <h2 class="card-title">Terms &amp; Conditions</h2>
+      <p class="card-sub" style="margin-bottom:0;">
+        Entries are recorded with your provided name, WhatsApp number, and Transaction ID after fee transfer to the official account. Draw results are announced on scheduled draw dates.
+      </p>
+    </section>
+  </main>
 
   <script>
     (function () {
@@ -146,160 +348,250 @@
         errBox.textContent = "Error: " + (e.message || "Unknown error");
       });
 
-      const STORAGE_KEY = "tahir_abbas_lucky_draw_v1";
+      const STORAGE_KEY = "tahir_abbas_pk_lucky_draw_v2";
       const ADMIN_PIN = "10203040";
 
-      const defaultTiers = [
-        { id: "mobile", name: "Mobile Phone Draw", fee: "100 SAR" },
-        { id: "laptop", name: "Laptop Draw", fee: "200 SAR" }
+      const tiers = [
+        {
+          id: "mobile",
+          label: "MOBILE PHONE TIER",
+          name: "Redmi 14C",
+          spec: "6GB RAM / 128GB",
+          feeText: "Entry Fee: PKR 100",
+          codePrefix: "SLV",
+          img: "data:image/svg+xml;utf8," + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#0f172a"/><rect x="112" y="16" width="96" height="148" rx="14" fill="#1e3a8a" stroke="#60a5fa" stroke-width="3"/><circle cx="144" cy="52" r="14" fill="#020617" stroke="#93c5fd" stroke-width="2"/><circle cx="176" cy="52" r="10" fill="#020617"/><text x="160" y="138" fill="#ffffff" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">Redmi 14C</text></svg>'
+          )
+        },
+        {
+          id: "laptop",
+          label: "LAPTOP TIER",
+          name: "Dell Latitude Core i5",
+          spec: "8GB RAM / 256GB SSD",
+          feeText: "Entry Fee: PKR 200",
+          codePrefix: "GLD",
+          img: "data:image/svg+xml;utf8," + encodeURIComponent(
+            '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#e2e8f0"/><rect x="65" y="24" width="190" height="112" rx="8" fill="#1e293b"/><rect x="75" y="34" width="170" height="90" fill="#38bdf8"/><rect x="38" y="138" width="244" height="14" rx="5" fill="#64748b"/><text x="160" y="84" fill="#0f172a" font-size="13" font-family="sans-serif" font-weight="bold" text-anchor="middle">Latitude i5</text></svg>'
+          )
+        }
       ];
 
-      const defaultState = {
-        selectedTierId: "mobile",
-        accounts: ["JazzCash / Easypaisa", "Bank / Wallet Transfer"],
-        slips: []
-      };
+      const initialEntries = [
+        { name: "Ali Raza", tierLabel: "Laptop Tier • 0300****312", code: "#GLD-4821", isGold: true },
+        { name: "Sana Malik", tierLabel: "Mobile Phone Tier • 0321****549", code: "#SLV-1093", isGold: false },
+        { name: "Hamza Khan", tierLabel: "Mobile Phone Tier • 0345****781", code: "#SLV-7342", isGold: false }
+      ];
 
-      function loadState() {
+      function loadData() {
         try {
           const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) return structuredClone(defaultState);
-          const parsed = JSON.parse(raw);
+          if (!raw) {
+            return {
+              selectedTierId: "mobile",
+              method: "JAZZCASH",
+              number: "03442900408",
+              title: "Tahir Abbas",
+              entries: initialEntries.slice()
+            };
+          }
+          const d = JSON.parse(raw);
           return {
-            selectedTierId: parsed.selectedTierId || "mobile",
-            accounts: Array.isArray(parsed.accounts) && parsed.accounts.length ? parsed.accounts : defaultState.accounts.slice(),
-            slips: Array.isArray(parsed.slips) ? parsed.slips : []
+            selectedTierId: d.selectedTierId || "mobile",
+            method: d.method || "JAZZCASH",
+            number: d.number || "03442900408",
+            title: d.title || "Tahir Abbas",
+            entries: Array.isArray(d.entries) && d.entries.length ? d.entries : initialEntries.slice()
           };
         } catch (e) {
-          return structuredClone(defaultState);
+          return {
+            selectedTierId: "mobile",
+            method: "JAZZCASH",
+            number: "03442900408",
+            title: "Tahir Abbas",
+            entries: initialEntries.slice()
+          };
         }
       }
 
-      let state = loadState();
+      let appData = loadData();
 
-      function saveState() {
+      function saveData() {
         try {
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-        } catch (e) {
-          errBox.style.display = "block";
-          errBox.textContent = "Storage save error: " + e.message;
-        }
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(appData));
+        } catch (e) {}
       }
 
-      function renderAll() {
-        const tiersBox = document.getElementById("tiersBox");
-        tiersBox.innerHTML = "";
-        defaultTiers.forEach(function (t) {
-          const div = document.createElement("div");
-          div.className = "tier" + (state.selectedTierId === t.id ? " active" : "");
-          div.innerHTML = '<div class="tier-title">' + t.name + '</div><div class="tier-price">' + t.fee + '</div>';
-          div.addEventListener("click", function () {
-            state.selectedTierId = t.id;
-            saveState();
-            renderAll();
+      function maskPhone(p) {
+        const digits = p.replace(/\s+/g, "");
+        if (digits.length >= 7) {
+          return digits.slice(0, 4) + "****" + digits.slice(-3);
+        }
+        return digits;
+      }
+
+      function render() {
+        document.getElementById("dispMethod").textContent = appData.method;
+        document.getElementById("dispNumber").textContent = appData.number;
+        document.getElementById("dispTitle").textContent = "Title: " + appData.title;
+
+        const tiersEl = document.getElementById("tiersContainer");
+        tiersEl.innerHTML = "";
+        tiers.forEach(function (tier) {
+          const isSel = appData.selectedTierId === tier.id;
+          const card = document.createElement("div");
+          card.className = "tier-card" + (isSel ? " selected" : "");
+          card.innerHTML =
+            '<div>' +
+              '<img class="tier-img" src="' + tier.img + '" alt="' + tier.name + '" />' +
+              '<div class="tier-label">' + tier.label + '</div>' +
+              '<div class="tier-name">' + tier.name + '</div>' +
+              '<div class="tier-spec">' + tier.spec + '</div>' +
+            '</div>' +
+            '<div>' +
+              '<span class="fee-badge">' + tier.feeText + '</span>' +
+              (isSel ? '<div class="selected-txt">Selected</div>' : '') +
+            '</div>';
+          card.addEventListener("click", function () {
+            appData.selectedTierId = tier.id;
+            saveData();
+            render();
           });
-          tiersBox.appendChild(div);
+          tiersEl.appendChild(card);
         });
 
-        const accountsBox = document.getElementById("accountsBox");
-        const payMethod = document.getElementById("payMethod");
-        accountsBox.innerHTML = state.accounts.map(function (acc) { return "<div>• " + acc + "</div>"; }).join("");
-        payMethod.innerHTML = state.accounts.map(function (acc) {
-          return '<option value="' + acc.replace(/"/g, "&quot;") + '">' + acc + "</option>";
+        const activeTier = tiers.find(function (t) { return t.id === appData.selectedTierId; }) || tiers[0];
+        document.getElementById("activeTierText").textContent =
+          "Joining " + activeTier.label.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + " (" + activeTier.name + ")";
+
+        const recentEl = document.getElementById("recentEntriesList");
+        const partEl = document.getElementById("participantsList");
+
+        recentEl.innerHTML = appData.entries.map(function (item) {
+          return (
+            '<div class="entry-item">' +
+              '<div>' +
+                '<div class="entry-name">' + item.name + '</div>' +
+                '<div class="entry-sub">' + item.tierLabel + '</div>' +
+              '</div>' +
+              '<span class="code-pill' + (item.isGold ? '' : ' silver') + '">' + item.code + '</span>' +
+            '</div>'
+          );
         }).join("");
 
-        const slipsList = document.getElementById("slipsList");
-        if (!state.slips.length) {
-          slipsList.innerHTML = '<div class="muted">Abhi koi slip darj nahi hai.</div>';
-        } else {
-          slipsList.innerHTML = state.slips.map(function (s) {
-            return (
-              '<div class="slip">' +
-              "<div><strong>Slip #:</strong> " + s.code + "</div>" +
-              "<div><strong>Naam:</strong> " + s.name + " | <strong>Phone:</strong> " + s.phone + "</div>" +
-              "<div><strong>Tier:</strong> " + s.tier + " | <strong>Method:</strong> " + s.method + "</div>" +
-              "<div><strong>Trx ID:</strong> " + s.trx + "</div>" +
-              "</div>"
-            );
-          }).join("");
-        }
+        partEl.innerHTML = appData.entries.map(function (item) {
+          return (
+            '<div class="entry-item">' +
+              '<div class="entry-name">' + item.name + '</div>' +
+              '<span class="code-pill' + (item.isGold ? '' : ' silver') + '">' + item.code + '</span>' +
+            '</div>'
+          );
+        }).join("");
       }
 
-      document.getElementById("submitBtn").addEventListener("click", function () {
-        const name = document.getElementById("userName").value.trim();
-        const phone = document.getElementById("userPhone").value.trim();
-        const method = document.getElementById("payMethod").value;
-        const trx = document.getElementById("trxId").value.trim();
+      document.getElementById("enterDrawBtn").addEventListener("click", function (e) {
+        e.stopPropagation();
+        document.getElementById("slipFormCard").scrollIntoView({ behavior: "smooth" });
+      });
 
-        if (!name || !phone || !trx) {
-          alert("Barah-e-karam naam, phone aur transaction ID darj karein.");
+      document.getElementById("copyNumBtn").addEventListener("click", function () {
+        const num = appData.number;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(num).then(function () {
+            alert("Copied: " + num);
+          }).catch(function () {
+            prompt("Copy number:", num);
+          });
+        } else {
+          prompt("Copy number:", num);
+        }
+      });
+
+      document.getElementById("genSlipBtn").addEventListener("click", function () {
+        const name = document.getElementById("fullName").value.trim();
+        const wa = document.getElementById("waNumber").value.trim();
+        const trx = document.getElementById("trxId").value.trim();
+        const agreed = document.getElementById("termsCheck").checked;
+
+        if (!name || !wa || !trx) {
+          alert("Please enter your name, WhatsApp number, and Transaction ID.");
+          return;
+        }
+        if (!agreed) {
+          alert("Please accept Terms & Conditions first.");
           return;
         }
 
-        const tierObj = defaultTiers.find(function (t) { return t.id === state.selectedTierId; }) || defaultTiers[0];
-        const slip = {
-          code: "LD-" + Math.floor(100000 + Math.random() * 900000),
+        const tier = tiers.find(function (t) { return t.id === appData.selectedTierId; }) || tiers[0];
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const code = "#" + tier.codePrefix + "-" + randomNum;
+
+        const newEntry = {
           name: name,
-          phone: phone,
-          tier: tierObj.name + " (" + tierObj.fee + ")",
-          method: method,
-          trx: trx
+          tierLabel: tier.name + " • " + maskPhone(wa),
+          code: code,
+          isGold: tier.id === "laptop"
         };
 
-        state.slips.unshift(slip);
-        saveState();
-        renderAll();
+        appData.entries.unshift(newEntry);
+        saveData();
+        render();
 
-        document.getElementById("latestSlip").innerHTML =
-          '<div class="slip"><strong>Slip Ban Gayi!</strong> Code: <strong>' + slip.code + "</strong></div>";
+        document.getElementById("latestSlipBox").innerHTML =
+          '<div class="slip-box">' +
+            '<strong>Digital Slip Generated (' + code + ')</strong><br/>' +
+            'Name: ' + name + ' | WhatsApp: ' + wa + '<br/>' +
+            'Tier: ' + tier.name + ' (' + tier.feeText + ') | TRX ID: ' + trx +
+          '</div>';
 
-        document.getElementById("userName").value = "";
-        document.getElementById("userPhone").value = "";
+        document.getElementById("fullName").value = "";
+        document.getElementById("waNumber").value = "";
         document.getElementById("trxId").value = "";
+        document.getElementById("termsCheck").checked = false;
       });
 
-      let tapCount = 0;
+      let taps = 0;
       let tapTimer = null;
-      document.getElementById("brandHeader").addEventListener("click", function () {
-        tapCount += 1;
+      document.getElementById("topBrand").addEventListener("click", function () {
+        taps += 1;
         clearTimeout(tapTimer);
-        tapTimer = setTimeout(function () { tapCount = 0; }, 1400);
-
-        if (tapCount >= 5) {
-          tapCount = 0;
-          const pin = prompt("Admin PIN darj karein:");
-          if (pin === ADMIN_PIN) {
-            const panel = document.getElementById("adminPanel");
-            panel.classList.remove("hidden");
-            document.getElementById("adminAccounts").value = state.accounts.join(" | ");
-          } else if (pin !== null) {
-            alert("Ghalat PIN.");
-          }
+        tapTimer = setTimeout(function () { taps = 0; }, 1500);
+        if (taps >= 5) {
+          taps = 0;
+          const card = document.getElementById("adminLoginCard");
+          card.classList.remove("hidden");
+          card.scrollIntoView({ behavior: "smooth" });
         }
       });
 
-      document.getElementById("saveAdminBtn").addEventListener("click", function () {
-        const val = document.getElementById("adminAccounts").value;
-        const list = val.split("|").map(function (x) { return x.trim(); }).filter(Boolean);
-        if (list.length) {
-          state.accounts = list;
-          saveState();
-          renderAll();
-          alert("Settings save ho gayin.");
+      document.getElementById("unlockAdminBtn").addEventListener("click", function () {
+        const pin = document.getElementById("adminPinInput").value.trim();
+        if (pin === ADMIN_PIN) {
+          document.getElementById("adminControls").classList.remove("hidden");
+          document.getElementById("editAccountNum").value = appData.number;
+          document.getElementById("editAccountTitle").value = appData.title;
+        } else {
+          alert("Invalid PIN.");
         }
       });
 
-      document.getElementById("clearSlipsBtn").addEventListener("click", function () {
-        state.slips = [];
-        saveState();
-        renderAll();
+      document.getElementById("saveAccountBtn").addEventListener("click", function () {
+        const newNum = document.getElementById("editAccountNum").value.trim();
+        const newTitle = document.getElementById("editAccountTitle").value.trim();
+        if (newNum) appData.number = newNum;
+        if (newTitle) appData.title = newTitle;
+        saveData();
+        render();
+        alert("Account updated.");
       });
 
-      document.getElementById("closeAdminBtn").addEventListener("click", function () {
-        document.getElementById("adminPanel").classList.add("hidden");
+      document.getElementById("resetEntriesBtn").addEventListener("click", function () {
+        appData.entries = initialEntries.slice();
+        saveData();
+        render();
+        alert("Entries reset.");
       });
 
-      renderAll();
+      render();
     })();
   </script>
 </body>

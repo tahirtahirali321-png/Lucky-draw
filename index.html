@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lucky Draw</title>
+    <meta name="description" content="Official Lucky Draw Portal" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="text/babel" data-presets="react,typescript">
+      const { useEffect, useRef, useState } = React;
+
+
+type Tier = "silver" | "gold";
+type Entry = {
+  id: number;
+  name: string;
+  whatsapp: string;
+  trx: string;
+  tier: Tier;
+  slip: string;
+  verified: boolean;
+};
+type TierInfo = { label: string; model: string; specs: string; fee: number; photo: string };
+type Account = { method: string; number: string; title: string };
+
+const ADMIN_PIN = "10203040";
+const PREFIX: Record<Tier, string> = { silver: "SLV", gold: "GLD" };
+
+const initialTiers: Record<Tier, TierInfo> = {
+  silver: { label: "Mobile Phone Tier", model: "Redmi 14C", specs: "6GB RAM / 128GB", fee: 50, photo: "" },
+  gold: { label: "Laptop Tier", model: "Dell Latitude Core i5", specs: "8GB RAM / 256GB SSD", fee: 100, photo: "" },
+};
+
+const STORAGE_KEY = "lucky-draw-settings-v1";
+
+// Reads saved tier fees/photos/models and account details; falls back to defaults.
+const loadSettings = (): { tiers: Record<Tier, TierInfo>; accounts: Account[] } => {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      const saved = JSON.parse(raw);
+      return {
+        tiers: {
+          silver: { ...initialTiers.silver, ...saved.tiers?.silver },
+          gold: { ...initialTiers.gold, ...saved.tiers?.gold },
+        },
+        accounts: Array.isArray(saved.accounts) ? saved.accounts : initialAccounts,
+      };
+    }
+  } catch {
+    // Corrupt or unavailable storage: use defaults.
+  }
+  return { tiers: initialTiers, accounts: initialAccounts };
+};
+
+const initialAccounts: Account[] = [
+  { method: "EasyPaisa", number: "0312-3456789", title: "Tahir Abbas" },
+  { method: "JazzCash", number: "03442900408", title: "Tahir Abbas" },
+];
+
+const seedEntries: Entry[] = [
+  { id: 1, name: "Ali Raza", whatsapp: "03001234567", trx: "TRX88421", tier: "gold", slip: "#GLD-4821", verified: true },
+  { id: 2, name: "Sana Malik", whatsapp: "03219876543", trx: "TRX10275", tier: "silver", slip: "#SLV-1093", verified: true },
+  { id: 3, name: "Hamza Khan", whatsapp: "03451112233", trx: "TRX55310", tier: "silver", slip: "#SLV-7342", verified: false },
+];
+
+const makeSlip = (tier: Tier, existing: string[]) => {
+  let slip: string;
+  do {
+    slip = `#${PREFIX[tier]}-${Math.floor(1000 + Math.random() * 9000)}`;
+  } while (existing.includes(slip));
+  return slip;
+};
+
+const maskPhone = (n: string) =>
+  n.length >= 7 ? `${n.slice(0, 4)}${"*".repeat(n.length - 7)}${n.slice(-3)}` : "***";
+
+const inputCls =
+  "w-full min-h-[44px] rounded-xl border border-emerald-200 bg-white px-4 py-3 text-base text-emerald-950 outline-none focus:ring-2 focus:ring-amber-400";
+const cardCls = "rounded-2xl border border-amber-200 bg-white p-4 shadow-sm";
+const primaryBtn =
+  "min-h-[44px] rounded-full bg-amber-400 px-5 py-3 font-bold text-emerald-950 shadow active:scale-95 transition";
+const greenBtn =
+  "min-h-[44px] rounded-xl bg-emerald-800 px-4 py-3 font-semibold text-amber-100 active:scale-95 transition";
+const smallBtn =
+  "min-h-[44px] rounded-lg border border-emerald-700 px-3 py-2 text-sm font-semibold text-emerald-900 active:scale-95 transition";
+
+function Index() {
+  const [view, setView] = useState<"enter" | "admin">("enter");
+  const [saved] = useState(loadSettings);
+  const [tiers, setTiers] = useState<Record<Tier, TierInfo>>(saved.tiers);
+  const [accounts, setAccounts] = useState<Account[]>(saved.accounts);
+  const [entries, setEntries] = useState<Entry[]>(seedEntries);
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ tiers, accounts }));
+    } catch {
+      // Storage full or blocked: settings still work for this session.
+    }
+  }, [tiers, accounts]);
+
+  const [selected, setSelected] = useState<Tier>("silver");
+  const [form, setForm] = useState({ name: "", whatsapp: "", trx: "" });
+  const [formError, setFormError] = useState("");
+  const [lastSlip, setLastSlip] = useState<Entry | null>(null);
+  const [copied, setCopied] = useState("");
+  const [pinInput, setPinInput] = useState("");
+  const [pinError, setPinError] = useState("");
+  const [unlocked, setUnlocked] = useState(false);
+  const [manual, setManual] = useState({ name: "", whatsapp: "", trx: "", tier: "silver" as Tier });
+  const [manualMsg, setManualMsg] = useState("");
+  const [winners, setWinners] = useState<Record<Tier, Entry | null>>({ silver: null, gold: null });
+  const [spinTier, setSpinTier] = useState<Tier>("silver");
+  const [spinning, setSpinning] = useState(false);
+  const [showEasypaisa, setShowEasypaisa] = useState(false);
+  const [draft, setDraft] = useState<Record<string, { number: string; title: string }>>(
+    () => Object.fromEntries(saved.accounts.map((a) => [a.method, { number: a.number, title: a.title }]))
+  );
+  const [settingsMsg, setSettingsMsg] = useState("");
+  const [announced, setAnnounced] = useState<{ name: string; phone: string; tier: Tier } | null>(null);
+  const [annForm, setAnnForm] = useState<{ name: string; phone: string; tier: Tier }>({
+    name: "",
+    phone: "",
+    tier: "silver",
+  });
+  const [annMsg, setAnnMsg] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const tapCount = useRef(0);
+  const tapTimer = useRef<number | undefined>(undefined);
+
+  // 5 quick taps on the title open the admin login (hidden from normal users).
+  const handleTitleTap = () => {
+    tapCount.current += 1;
+    window.clearTimeout(tapTimer.current);
+    if (tapCount.current >= 5) {
+      tapCount.current = 0;
+      setUnlocked(false);
+      setPinInput("");
+      setPinError("");
+      setView("admin");
+      return;
+    }
+    tapTimer.current = window.setTimeout(() => {
+      tapCount.current = 0;
+    }, 1500);
+  };
+
+  const announceWinner = () => {
+    if (!annForm.name.trim() || !annForm.phone.trim()) {
+      setAnnMsg("Enter the winner's name and phone number.");
+      return;
+    }
+    setAnnounced({ name: annForm.name.trim(), phone: annForm.phone.trim(), tier: annForm.tier });
+    setAnnMsg("Winner announced on the main screen.");
+  };
+
+  const clearWinner = () => {
+    setAnnounced(null);
+    setAnnMsg("Winner cleared. The banner is hidden.");
+  };
+
+  const saveSettings = () => {
+    if (Object.values(draft).some((d) => !d.number.trim())) {
+      setSettingsMsg("Account numbers cannot be empty.");
+      return;
+    }
+    setAccounts((prev) =>
+      prev.map((a) => ({
+        ...a,
+        number: draft[a.method].number.trim(),
+        title: draft[a.method].title.trim() || a.title,
+      }))
+    );
+    setSettingsMsg("Saved. The payment box on the main screen is updated.");
+  };
+
+  const updateDraft = (method: string, patch: { number?: string; title?: string }) => {
+    setDraft((prev) => ({ ...prev, [method]: { ...prev[method], ...patch } }));
+    setSettingsMsg("");
+  };
+
+  const visibleAccounts = accounts.filter((a) => a.method !== "EasyPaisa" || showEasypaisa);
+
+  const copyText = (key: string, text: string) => {
+    navigator.clipboard?.writeText(text).catch(() => {});
+    setCopied(key);
+    setTimeout(() => setCopied(""), 1500);
+  };
+
+  const updateTier = (tier: Tier, patch: Partial<TierInfo>) =>
+    setTiers((prev) => ({ ...prev, [tier]: { ...prev[tier], ...patch } }));
+
+  const createEntry = (data: Omit<Entry, "id" | "slip" | "verified">, verified: boolean) => {
+    const entry: Entry = {
+      id: Date.now() + Math.random(),
+      ...data,
+      slip: makeSlip(data.tier, entries.map((e) => e.slip)),
+      verified,
+    };
+    setEntries((prev) => [entry, ...prev]);
+    return entry;
+  };
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    if (!agreed) {
+      setFormError("Please agree to the Terms & Conditions before generating your slip.");
+      return;
+    }
+    const whatsapp = form.whatsapp.replace(/[-\s]/g, "");
+    if (!form.name.trim() || !whatsapp || !form.trx.trim()) {
+      setFormError("Please fill in your name, WhatsApp number and TRX ID.");
+      return;
+    }
+    if (!/^03\d{9}$/.test(whatsapp)) {
+      setFormError("Enter a valid WhatsApp number (03XXXXXXXXX).");
+      return;
+    }
+    const entry = createEntry(
+      { name: form.name.trim(), whatsapp, trx: form.trx.trim().toUpperCase(), tier: selected },
+      false
+    );
+    setLastSlip(entry);
+    setForm({ name: "", whatsapp: "", trx: "" });
+    setFormError("");
+  };
+
+  const handlePin = (e: FormEvent) => {
+    e.preventDefault();
+    if (pinInput === ADMIN_PIN) {
+      setUnlocked(true);
+      setPinError("");
+      setPinInput("");
+    } else {
+      setPinError("Wrong PIN. Please try again.");
+    }
+  };
+
+  const handleManual = (e: FormEvent) => {
+    e.preventDefault();
+    if (!manual.name.trim() || !manual.whatsapp.trim() || !manual.trx.trim()) {
+      setManualMsg("Fill in name, WhatsApp and TRX ID.");
+      return;
+    }
+    const entry = createEntry(
+      { name: manual.name.trim(), whatsapp: manual.whatsapp.trim(), trx: manual.trx.trim().toUpperCase(), tier: manual.tier },
+      true
+    );
+    setManualMsg(`Slip ${entry.slip} added for ${entry.name}.`);
+    setManual({ name: "", whatsapp: "", trx: "", tier: manual.tier });
+  };
+
+  const toggleVerify = (id: number) =>
+    setEntries((prev) => prev.map((e) => (e.id === id ? { ...e, verified: !e.verified } : e)));
+
+  const deleteEntry = (id: number) => setEntries((prev) => prev.filter((e) => e.id !== id));
+
+  // Resets only this tier's entries and winner; the other tier stays untouched.
+  const startNextDraw = (tier: Tier) => {
+    setEntries((prev) => prev.filter((e) => e.tier !== tier));
+    setWinners((prev) => ({ ...prev, [tier]: null }));
+  };
+
+  const pickWinner = (tier: Tier) => {
+    const pool = entries.filter((e) => e.tier === tier && e.verified);
+    if (!pool.length || spinning) return;
+    setSpinning(true);
+    setTimeout(() => {
+      const w = pool[Math.floor(Math.random() * pool.length)];
+      setWinners((prev) => ({ ...prev, [tier]: w }));
+      setSpinning(false);
+    }, 1200);
+  };
+
+  const verifiedCount = (tier: Tier) => entries.filter((e) => e.tier === tier && e.verified).length;
+
+  const tabCls = (active: boolean) =>
+    `min-h-[44px] flex-1 rounded-full px-4 py-2 text-sm font-bold transition ${
+      active ? "bg-amber-400 text-emerald-950 shadow" : "bg-emerald-800 text-amber-100"
+    }`;
+
+  return (
+    <div className="min-h-screen bg-emerald-50 text-emerald-950">
+      <header className="sticky top-0 z-10 bg-emerald-900 text-amber-100 shadow-md">
+        <div className="mx-auto max-w-2xl px-4 pt-4 pb-3">
+          <div
+            className="flex cursor-default select-none items-center justify-center gap-3"
+            onClick={handleTitleTap}
+          >
+            <img src="data:image/svg+xml;utf8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%20width%3D%2244%22%20height%3D%2244%22%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22lg-gold%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%25%22%20stop-color%3D%22%23fde68a%22%20/%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%22100%25%22%20stop-color%3D%22%23d4a017%22%20/%3E%0A%20%20%20%20%3C/linearGradient%3E%0A%20%20%3C/defs%3E%0A%20%20%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%2223%22%20fill%3D%22%23064e3b%22%20stroke%3D%22url%28%23lg-gold%29%22%20stroke-width%3D%222%22%20/%3E%0A%20%20%3Cpath%20d%3D%22M24%208%20L36%2020%20L24%2040%20L12%2020%20Z%22%20fill%3D%22url%28%23lg-gold%29%22%20/%3E%0A%20%20%3Cpath%20d%3D%22M24%208%20L30%2020%20L24%2016%20L18%2020%20Z%22%20fill%3D%22%23fef9e7%22%20opacity%3D%220.85%22%20/%3E%0A%20%20%3Cpath%20d%3D%22M12%2020%20L24%2024%20L36%2020%22%20fill%3D%22none%22%20stroke%3D%22%23064e3b%22%20stroke-width%3D%221.2%22%20opacity%3D%220.5%22%20/%3E%0A%3C/svg%3E" width={44} height={44} alt="" className="h-11 w-11 shrink-0" />
+            <h1 className="bg-gradient-to-r from-amber-300 via-amber-100 to-white bg-clip-text text-2xl font-black uppercase tracking-widest text-transparent drop-shadow-sm">
+              Lucky Draw
+            </h1>
+          </div>
+          <nav className="mt-3 flex gap-2">
+            <button className={tabCls(view === "enter")} onClick={() => setView("enter")}>
+              Enter Draw
+            </button>
+          </nav>
+        </div>
+      </header>
+
+      <main className="mx-auto max-w-2xl space-y-5 px-4 py-5">
+        {view === "enter" && announced && (
+          <section className="overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-800 to-emerald-600 p-5 text-center text-amber-100 shadow-lg">
+            <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-300">🏆 Winner Announced</p>
+            <p className="mt-2 text-3xl font-extrabold text-amber-300">{announced.name}</p>
+            <p className="mt-1 text-sm font-semibold">
+              {tiers[announced.tier].label} · {tiers[announced.tier].model}
+            </p>
+            <p className="text-sm text-amber-100/90">Phone: {announced.phone}</p>
+          </section>
+        )}
+
+        {view === "enter" && (
+          <>
+            {/* Payment box */}
+            <section className={cardCls}>
+              <h2 className="text-lg font-bold text-emerald-900">Pay Your Entry Fee</h2>
+              <p className="text-sm text-emerald-700">Send the fee to either official account below.</p>
+              <div className="mt-3 space-y-3">
+                {visibleAccounts.map((a) => (
+                  <div key={a.method} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50 p-3">
+                    <div>
+                      <p className="text-xs font-semibold uppercase text-emerald-700">{a.method}</p>
+                      <p className="text-lg font-bold">{a.number}</p>
+                      <p className="text-sm text-emerald-800">Title: {a.title}</p>
+                    </div>
+                    <button className={smallBtn} onClick={() => copyText(`acc-${a.method}`, a.number)}>
+                      {copied === `acc-${a.method}` ? "Copied!" : "Copy Number"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Tiers */}
+            <section className="grid gap-4 sm:grid-cols-2">
+              {(["silver", "gold"] as Tier[]).map((t) => {
+                const info = tiers[t];
+                const active = selected === t;
+                return (
+                  <button
+                    key={t}
+                    onClick={() => setSelected(t)}
+                    className={`rounded-2xl border-2 p-4 text-left shadow-sm transition active:scale-[0.98] ${
+                      active ? "border-amber-400 bg-amber-50" : "border-emerald-100 bg-white"
+                    }`}
+                  >
+                    {info.photo && (
+                      <img src={info.photo} alt={info.model} className="mb-3 h-36 w-full rounded-xl object-cover" />
+                    )}
+                    <p className={`text-xs font-bold uppercase tracking-wider ${t === "gold" ? "text-amber-600" : "text-slate-500"}`}>
+                      {info.label}
+                    </p>
+                    <h3 className="mt-1 text-xl font-extrabold text-emerald-900">{info.model}</h3>
+                    <p className="text-sm text-emerald-700">{info.specs}</p>
+                    <p className="mt-3 inline-block rounded-full bg-emerald-900 px-3 py-1 text-sm font-semibold text-amber-300">
+                      Entry Fee: PKR {info.fee}
+                    </p>
+                    {active && <p className="mt-2 text-sm font-semibold text-emerald-800">Selected</p>}
+                  </button>
+                );
+              })}
+            </section>
+
+            {/* Entry form */}
+            <section className={cardCls}>
+              <h2 className="text-lg font-bold text-emerald-900">Get Your Digital Slip</h2>
+              <p className="text-sm text-emerald-700">
+                Joining: {tiers[selected].label} ({tiers[selected].model})
+              </p>
+              <form onSubmit={handleSubmit} className="mt-3 space-y-3">
+                <input className={inputCls} placeholder="Your name" value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                <input className={inputCls} placeholder="WhatsApp number (03XXXXXXXXX)" inputMode="tel" value={form.whatsapp}
+                  onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
+                <input className={inputCls} placeholder="Transaction ID (TRX ID)" value={form.trx}
+                  onChange={(e) => setForm({ ...form, trx: e.target.value })} />
+                <label className="flex items-start gap-3 rounded-xl bg-emerald-50 p-3 text-sm text-emerald-900">
+                  <input type="checkbox" className="mt-1 h-5 w-5 shrink-0 accent-emerald-800" checked={agreed}
+                    onChange={(e) => { setAgreed(e.target.checked); setFormError(""); }} />
+                  <span>
+                    I agree to the Terms & Conditions. <span className="text-red-700">*</span>{" "}
+                    <button type="button" className="font-bold underline" onClick={() => setShowTerms(true)}>
+                      View Terms & Conditions
+                    </button>
+                  </span>
+                </label>
+                {formError && <p className="text-sm font-semibold text-red-700">{formError}</p>}
+                <button type="submit" className={`${primaryBtn} w-full`}>Generate Digital Slip</button>
+              </form>
+
+              {lastSlip && (
+                <div className="mt-4 rounded-xl border-2 border-dashed border-amber-400 bg-amber-50 p-4 text-center">
+                  <p className="text-xs font-bold uppercase tracking-wider text-emerald-700">Your Digital Slip</p>
+                  <p className="mt-1 text-3xl font-extrabold text-emerald-900">{lastSlip.slip}</p>
+                  <p className="text-sm text-emerald-800">{lastSlip.name} · {tiers[lastSlip.tier].model}</p>
+                </div>
+              )}
+            </section>
+
+            {/* Recent entries feed (newest first, phone numbers masked) */}
+            <section className={cardCls}>
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-emerald-900">Recent Entries</h2>
+                <span className="flex items-center gap-1 text-xs font-semibold text-emerald-700">
+                  <span className="h-2 w-2 animate-pulse rounded-full bg-emerald-500" /> Live
+                </span>
+              </div>
+              {entries.length === 0 ? (
+                <p className="mt-2 text-sm text-emerald-700">No entries yet. New slips will appear here.</p>
+              ) : (
+                <ul className="mt-3 space-y-2">
+                  {entries.slice(0, 10).map((e) => (
+                    <li key={e.id} className="flex flex-wrap items-center justify-between gap-2 rounded-xl bg-emerald-50 p-3">
+                      <div>
+                        <p className="font-semibold">{e.name}</p>
+                        <p className="text-xs text-emerald-700">
+                          {tiers[e.tier].label} · {maskPhone(e.whatsapp)}
+                        </p>
+                      </div>
+                      <span className={`rounded-full px-3 py-1 text-sm font-bold ${e.tier === "gold" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}`}>
+                        {e.slip}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+
+            {/* Live list */}
+            <section className={cardCls}>
+              <h2 className="text-lg font-bold text-emerald-900">Live Draw Participants</h2>
+              {entries.length === 0 ? (
+                <p className="mt-2 text-sm text-emerald-700">No participants yet. Be the first!</p>
+              ) : (
+                <ul className="mt-3 divide-y divide-emerald-100">
+                  {entries.map((e) => (
+                    <li key={e.id} className="flex items-center justify-between py-3">
+                      <span className="font-semibold">{e.name}</span>
+                      <span className={`rounded-full px-3 py-1 text-sm font-bold ${e.tier === "gold" ? "bg-amber-100 text-amber-800" : "bg-slate-100 text-slate-700"}`}>
+                        {e.slip}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          </>
+        )}
+
+        {view === "admin" && (
+          <>
+            {!unlocked ? (
+              <section className={cardCls}>
+                <h2 className="text-lg font-bold text-emerald-900">Admin Login</h2>
+                <p className="text-sm text-emerald-700">Enter the 4-digit PIN to continue.</p>
+                <form onSubmit={handlePin} className="mt-3 flex gap-2">
+                  <input className={inputCls} type="password" inputMode="numeric" maxLength={8} placeholder="8-digit PIN"
+                    value={pinInput} onChange={(e) => setPinInput(e.target.value)} />
+                  <button type="submit" className={primaryBtn}>Unlock</button>
+                </form>
+                {pinError && <p className="mt-2 text-sm font-semibold text-red-700">{pinError}</p>}
+              </section>
+            ) : (
+              <>
+                {/* Payment settings */}
+                <section className={`${cardCls} space-y-4`}>
+                  <h2 className="text-lg font-bold text-emerald-900">Payment Settings</h2>
+
+                  <div className="flex items-center justify-between gap-3 rounded-xl bg-emerald-50 p-3">
+                    <div>
+                      <p className="font-bold">Show EasyPaisa on main screen</p>
+                      <p className="text-sm text-emerald-700">{showEasypaisa ? "Visible to users" : "Hidden from users"}</p>
+                    </div>
+                    <button
+                      role="switch"
+                      aria-checked={showEasypaisa}
+                      aria-label="Show EasyPaisa on main screen"
+                      onClick={() => setShowEasypaisa((v) => !v)}
+                      className={`relative inline-flex h-8 w-14 shrink-0 items-center rounded-full transition ${
+                        showEasypaisa ? "bg-emerald-700" : "bg-slate-300"
+                      }`}
+                    >
+                      <span
+                        className={`inline-block h-6 w-6 transform rounded-full bg-white shadow transition ${
+                          showEasypaisa ? "translate-x-7" : "translate-x-1"
+                        }`}
+                      />
+                    </button>
+                  </div>
+
+                  {accounts.map((a) => (
+                    <div key={a.method} className="space-y-2 rounded-xl bg-emerald-50 p-3">
+                      <p className="font-bold">{a.method}</p>
+                      <label className="block text-sm font-semibold text-emerald-900">
+                        Account number
+                        <input className={`${inputCls} mt-1`} inputMode="tel" value={draft[a.method]?.number ?? ""}
+                          onChange={(e) => updateDraft(a.method, { number: e.target.value })} />
+                      </label>
+                      <label className="block text-sm font-semibold text-emerald-900">
+                        Account title
+                        <input className={`${inputCls} mt-1`} value={draft[a.method]?.title ?? ""}
+                          onChange={(e) => updateDraft(a.method, { title: e.target.value })} />
+                      </label>
+                    </div>
+                  ))}
+
+                  <button className={`${primaryBtn} w-full`} onClick={saveSettings}>Save Payment Settings</button>
+                  {settingsMsg && <p className="text-sm font-semibold text-emerald-800">{settingsMsg}</p>}
+                </section>
+
+                {/* Models & Accounts */}
+                <section className={`${cardCls} space-y-5`}>
+                  <h2 className="text-lg font-bold text-emerald-900">Models & Accounts</h2>
+                  {(["silver", "gold"] as Tier[]).map((t) => (
+                    <div key={t} className="space-y-2 rounded-xl bg-emerald-50 p-3">
+                      <p className="font-bold">{tiers[t].label}</p>
+                      <input className={inputCls} aria-label="Model name" value={tiers[t].model}
+                        onChange={(e) => updateTier(t, { model: e.target.value })} />
+                      <input className={inputCls} aria-label="Specs" value={tiers[t].specs}
+                        onChange={(e) => updateTier(t, { specs: e.target.value })} />
+                      <input className={inputCls} aria-label="Entry fee" inputMode="numeric" value={tiers[t].fee}
+                        onChange={(e) => updateTier(t, { fee: Number(e.target.value.replace(/\D/g, "")) || 0 })} />
+                      <input className={inputCls} aria-label="Photo URL" placeholder="Photo URL (https://...)" value={tiers[t].photo}
+                        onChange={(e) => updateTier(t, { photo: e.target.value.trim() })} />
+                      <label className={`${smallBtn} flex w-full cursor-pointer items-center justify-center`}>
+                        Upload Photo
+                        <input type="file" accept="image/*" className="sr-only"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = () => updateTier(t, { photo: String(reader.result) });
+                            reader.readAsDataURL(file);
+                          }} />
+                      </label>
+                      {tiers[t].photo && (
+                        <img src={tiers[t].photo} alt={tiers[t].model} className="h-28 w-full rounded-xl object-cover" />
+                      )}
+                      <button className={`${greenBtn} w-full`} onClick={() => startNextDraw(t)}>
+                        Change Model & Start Next Draw
+                      </button>
+                    </div>
+                  ))}
+                </section>
+
+                {/* Entries */}
+                <section className={cardCls}>
+                  <h2 className="text-lg font-bold text-emerald-900">Entries ({entries.length})</h2>
+                  <ul className="mt-3 space-y-3">
+                    {entries.map((e) => (
+                      <li key={e.id} className="rounded-xl border border-emerald-100 p-3">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <span className="font-semibold">{e.name} · {e.slip}</span>
+                          <span className={`text-xs font-bold ${e.verified ? "text-emerald-700" : "text-amber-700"}`}>
+                            {e.verified ? "VERIFIED" : "PENDING"}
+                          </span>
+                        </div>
+                        <p className="text-sm text-emerald-800">TRX: {e.trx} · {e.whatsapp}</p>
+                        <div className="mt-2 flex gap-2">
+                          <button className={smallBtn} onClick={() => toggleVerify(e.id)}>
+                            {e.verified ? "Unverify" : "Verify"}
+                          </button>
+                          <button className={`${smallBtn} border-red-300 text-red-700`} onClick={() => deleteEntry(e.id)}>
+                            Delete
+                          </button>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <h3 className="mt-5 font-bold text-emerald-900">Manual Add (payment issues)</h3>
+                  <form onSubmit={handleManual} className="mt-2 space-y-2">
+                    <input className={inputCls} placeholder="Name" value={manual.name}
+                      onChange={(e) => setManual({ ...manual, name: e.target.value })} />
+                    <input className={inputCls} placeholder="WhatsApp number" value={manual.whatsapp}
+                      onChange={(e) => setManual({ ...manual, whatsapp: e.target.value })} />
+                    <input className={inputCls} placeholder="TRX ID" value={manual.trx}
+                      onChange={(e) => setManual({ ...manual, trx: e.target.value })} />
+                    <select className={inputCls} value={manual.tier}
+                      onChange={(e) => setManual({ ...manual, tier: e.target.value as Tier })}>
+                      <option value="silver">Mobile Phone — {tiers.silver.model}</option>
+                      <option value="gold">Laptop — {tiers.gold.model}</option>
+                    </select>
+                    <button type="submit" className={`${primaryBtn} w-full`}>Add Slip</button>
+                    {manualMsg && <p className="text-sm font-semibold text-emerald-800">{manualMsg}</p>}
+                  </form>
+                </section>
+
+                {/* Live Winner Announcement */}
+                <section className={`${cardCls} space-y-3`}>
+                  <h2 className="text-lg font-bold text-emerald-900">Live Winner Announcement</h2>
+                  <p className="text-sm text-emerald-700">Shown as a banner on the main screen. Clear it to hide.</p>
+                  <input className={inputCls} placeholder="Winner name" value={annForm.name}
+                    onChange={(e) => { setAnnForm({ ...annForm, name: e.target.value }); setAnnMsg(""); }} />
+                  <input className={inputCls} placeholder="Phone (e.g. 0300****567)" value={annForm.phone}
+                    onChange={(e) => { setAnnForm({ ...annForm, phone: e.target.value }); setAnnMsg(""); }} />
+                  <select className={inputCls} value={annForm.tier}
+                    onChange={(e) => setAnnForm({ ...annForm, tier: e.target.value as Tier })}>
+                    <option value="silver">Mobile Phone — {tiers.silver.model}</option>
+                    <option value="gold">Laptop — {tiers.gold.model}</option>
+                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button className={primaryBtn} onClick={announceWinner}>Announce Winner</button>
+                    <button className={greenBtn} onClick={clearWinner}>Clear Winner</button>
+                  </div>
+                  {annMsg && <p className="text-sm font-semibold text-emerald-800">{annMsg}</p>}
+                </section>
+
+                {/* Spinner */}
+                <section className={cardCls}>
+                  <h2 className="text-lg font-bold text-emerald-900">Live Draw Spinner</h2>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    {(["silver", "gold"] as Tier[]).map((t) => (
+                      <button key={t} className={tabCls(spinTier === t)} onClick={() => setSpinTier(t)}>
+                        {tiers[t].label}
+                      </button>
+                    ))}
+                  </div>
+                  <div className="mt-4 rounded-xl bg-emerald-900 p-5 text-center text-amber-100">
+                    {spinning ? (
+                      <p className="text-lg font-bold animate-pulse">Spinning...</p>
+                    ) : winners[spinTier] ? (
+                      <>
+                        <p className="text-xs font-bold uppercase tracking-wider text-amber-300">Winner · {tiers[spinTier].model}</p>
+                        <p className="mt-1 text-2xl font-extrabold">{winners[spinTier]!.name}</p>
+                        <p className="text-amber-200">{winners[spinTier]!.slip}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm">
+                        {verifiedCount(spinTier)} verified entries ready. Press the button to pick a winner.
+                      </p>
+                    )}
+                  </div>
+                  <button className={`${primaryBtn} mt-3 w-full`} disabled={spinning || verifiedCount(spinTier) === 0}
+                    onClick={() => pickWinner(spinTier)}>
+                    Pick Random Winner
+                  </button>
+                  <button className={`${greenBtn} mt-2 w-full`} onClick={() => startNextDraw(spinTier)}>
+                    Change Model & Start Next Draw
+                  </button>
+                </section>
+              </>
+            )}
+          </>
+        )}
+      </main>
+
+      {showTerms && (
+        <div className="fixed inset-0 z-50 flex items-end justify-center bg-emerald-950/70 p-4 sm:items-center" role="dialog" aria-modal="true" aria-label="Terms & Conditions">
+          <div className="max-h-[85vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-5 shadow-xl">
+            <h2 className="text-lg font-extrabold text-emerald-900">Terms & Conditions</h2>
+            <ol className="mt-3 list-decimal space-y-3 pl-5 text-sm text-emerald-900">
+              <li>Every user buys the ticket voluntarily at their own risk and responsibility.</li>
+              <li>The lucky draw happens once a month, with only one winner per category.</li>
+              <li>Entry fees are strictly non-refundable, whether you win or lose.</li>
+            </ol>
+            <button className={`${primaryBtn} mt-5 w-full`} onClick={() => setShowTerms(false)}>
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+      const root = ReactDOM.createRoot(document.getElementById("root"));
+      root.render(<Index />);
+    </script>
+  </body>
+</html>

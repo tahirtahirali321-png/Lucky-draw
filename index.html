@@ -10,7 +10,7 @@
       margin: 0;
       background: #eaf7ee;
       color: #0f172a;
-      padding-bottom: 36px;
+      padding-bottom: 44px;
     }
     .topbar {
       background: #064e3b;
@@ -68,6 +68,21 @@
       box-shadow: 0 4px 14px rgba(6, 78, 59, 0.08);
       border: 1px solid #d1fae5;
     }
+    .admin-card {
+      border: 2px solid #f59e0b;
+      background: #fffdf5;
+    }
+    .status-pill {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      border: 1px solid #86efac;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 8px;
+    }
     .card-title {
       font-size: 16px;
       font-weight: 800;
@@ -78,6 +93,13 @@
       font-size: 12px;
       color: #475569;
       margin: 0 0 12px;
+    }
+    .field-lbl {
+      display: block;
+      font-size: 12px;
+      font-weight: 700;
+      color: #064e3b;
+      margin: 8px 0 4px;
     }
     .account-box {
       background: #f0fdf4;
@@ -126,7 +148,7 @@
     }
     .tier-img {
       width: 100%;
-      height: 105px;
+      height: 110px;
       border-radius: 10px;
       object-fit: cover;
       background: #e2e8f0;
@@ -199,6 +221,7 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      gap: 8px;
       padding: 10px 12px;
       background: #f8fafc;
       border-radius: 10px;
@@ -207,7 +230,9 @@
     }
     .entry-name { font-size: 14px; font-weight: 700; color: #0f172a; }
     .entry-sub { font-size: 11px; color: #64748b; }
+    .right-badges { text-align: right; }
     .code-pill {
+      display: inline-block;
       background: #fef3c7;
       color: #92400e;
       font-size: 11px;
@@ -215,9 +240,52 @@
       padding: 4px 8px;
       border-radius: 999px;
     }
-    .code-pill.silver {
-      background: #e0f2fe;
-      color: #075985;
+    .code-pill.verified {
+      background: #dcfce7;
+      color: #166534;
+    }
+    .pay-status {
+      display: block;
+      font-size: 10px;
+      font-weight: 800;
+      margin-top: 3px;
+    }
+    .pay-pending { color: #b45309; }
+    .pay-verified { color: #15803d; }
+    .admin-entry-box {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 10px;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+    .admin-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .btn-verify {
+      flex: 1;
+      background: #15803d;
+      color: #fff;
+      border: 0;
+      border-radius: 7px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .btn-reject {
+      flex: 1;
+      background: #dc2626;
+      color: #fff;
+      border: 0;
+      border-radius: 7px;
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
     }
     .admin-row {
       display: flex;
@@ -226,6 +294,18 @@
     .hidden { display: none; }
     .btn-dark {
       background: #064e3b;
+      color: #ffffff;
+      border: 0;
+      border-radius: 8px;
+      padding: 11px 12px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      margin-top: 8px;
+      width: 100%;
+    }
+    .btn-gray {
+      background: #475569;
       color: #ffffff;
       border: 0;
       border-radius: 8px;
@@ -248,21 +328,9 @@
       margin-top: 8px;
       width: 100%;
     }
-    #errBox {
-      display: none;
-      background: #fef2f2;
-      color: #991b1b;
-      border: 1px solid #f87171;
-      padding: 10px 12px;
-      border-radius: 10px;
-      margin: 12px;
-      font-size: 12px;
-    }
   </style>
 </head>
 <body>
-  <div id="errBox"></div>
-
   <header class="topbar" id="topBrand" title="Tap 5 times for Admin">
     <div class="brand-row">
       <span class="diamond">◆</span>
@@ -274,19 +342,36 @@
   </header>
 
   <main class="container">
-    <section class="card hidden" id="adminLoginCard">
+    <section class="card admin-card hidden" id="adminLoginCard">
+      <div class="status-pill" id="adminStatusBadge">ADMIN LOCKED — ENTER PIN</div>
       <h2 class="card-title">Admin Login</h2>
       <p class="card-sub">Enter the 8-digit PIN to continue.</p>
-      <div class="admin-row">
-        <input type="password" id="adminPinInput" class="field" placeholder="8-digit PIN" style="margin-bottom:0;" />
-        <button type="button" class="gold-btn" id="unlockAdminBtn" style="width:auto; padding:0 18px;">Unlock</button>
+
+      <div id="pinStepBox">
+        <div class="admin-row">
+          <input type="password" id="adminPinInput" class="field" placeholder="8-digit PIN" style="margin-bottom:0;" />
+          <button type="button" class="gold-btn" id="unlockAdminBtn" style="width:auto; padding:0 18px;">Unlock</button>
+        </div>
       </div>
-      <div id="adminControls" class="hidden" style="margin-top:12px;">
-        <label style="font-size:12px; font-weight:700; color:#064e3b;">JazzCash Number &amp; Title</label>
+
+      <div id="adminControls" class="hidden" style="margin-top:10px;">
+        <span class="field-lbl">Entries Payment Verification</span>
+        <div id="adminEntriesBox"></div>
+
+        <span class="field-lbl">JazzCash Number &amp; Title</span>
         <input type="text" id="editAccountNum" class="field" placeholder="03442900408" />
         <input type="text" id="editAccountTitle" class="field" placeholder="Tahir Abbas" />
+
+        <span class="field-lbl">Mobile Photo URL</span>
+        <input type="text" id="editMobileImg" class="field" placeholder="https://example.com/mobile.jpg" />
+
+        <span class="field-lbl">Laptop Photo URL</span>
+        <input type="text" id="editLaptopImg" class="field" placeholder="https://example.com/laptop.jpg" />
+
         <button type="button" class="btn-dark" id="saveAccountBtn">Save Account Details</button>
+        <button type="button" class="btn-gray" id="resetPhotosBtn">Reset Default Photos</button>
         <button type="button" class="btn-red" id="resetEntriesBtn">Reset All Entries</button>
+        <button type="button" class="btn-gray" id="closeAdminBtn">Close Admin</button>
       </div>
     </section>
 
@@ -311,11 +396,12 @@
 
       <input type="text" id="fullName" class="field" placeholder="Your name" />
       <input type="text" id="waNumber" class="field" placeholder="Whatsapp number (03XXXXXXXXX)" />
+      <input type="text" id="senderNumber" class="field" placeholder="Payment bhejne wala number (03XXXXXXXXX)" />
       <input type="text" id="trxId" class="field" placeholder="Transaction ID (TRX ID)" />
 
       <div class="terms-row">
         <input type="checkbox" id="termsCheck" />
-        <label for="termsCheck">I agree to the Terms &amp; Conditions. <a href="#terms" id="termsLink">View Terms &amp; Conditions</a></label>
+        <label for="termsCheck">I agree to the Terms &amp; Conditions. <a href="#terms">View Terms &amp; Conditions</a></label>
       </div>
 
       <button type="button" class="gold-btn" id="genSlipBtn">Generate Digital Slip</button>
@@ -335,85 +421,59 @@
     <section class="card" id="terms">
       <h2 class="card-title">Terms &amp; Conditions</h2>
       <p class="card-sub" style="margin-bottom:0;">
-        Entries are recorded with your provided name, WhatsApp number, and Transaction ID after fee transfer to the official account. Draw results are announced on scheduled draw dates.
+        Entries are recorded with your name, WhatsApp number, payment sender number, and Transaction ID. Token is generated automatically and remains Pending Verification until payment is confirmed.
       </p>
     </section>
   </main>
 
   <script>
     (function () {
-      const errBox = document.getElementById("errBox");
-      window.addEventListener("error", function (e) {
-        errBox.style.display = "block";
-        errBox.textContent = "Error: " + (e.message || "Unknown error");
-      });
+      var STORAGE_KEY = "tahir_abbas_pk_lucky_draw_stable_v1";
+      var ADMIN_PIN = "10203040";
+      var isAdminUnlocked = false;
 
-      const STORAGE_KEY = "tahir_abbas_pk_lucky_draw_v2";
-      const ADMIN_PIN = "10203040";
+      var defaultMobileImg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#0f172a"/><rect x="112" y="16" width="96" height="148" rx="14" fill="#1e3a8a" stroke="#60a5fa" stroke-width="3"/><circle cx="144" cy="52" r="14" fill="#020617" stroke="#93c5fd" stroke-width="2"/><circle cx="176" cy="52" r="10" fill="#020617"/><text x="160" y="138" fill="#ffffff" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">Redmi 14C</text></svg>';
 
-      const tiers = [
-        {
-          id: "mobile",
-          label: "MOBILE PHONE TIER",
-          name: "Redmi 14C",
-          spec: "6GB RAM / 128GB",
-          feeText: "Entry Fee: PKR 100",
-          codePrefix: "SLV",
-          img: "data:image/svg+xml;utf8," + encodeURIComponent(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#0f172a"/><rect x="112" y="16" width="96" height="148" rx="14" fill="#1e3a8a" stroke="#60a5fa" stroke-width="3"/><circle cx="144" cy="52" r="14" fill="#020617" stroke="#93c5fd" stroke-width="2"/><circle cx="176" cy="52" r="10" fill="#020617"/><text x="160" y="138" fill="#ffffff" font-size="14" font-family="sans-serif" font-weight="bold" text-anchor="middle">Redmi 14C</text></svg>'
-          )
-        },
-        {
-          id: "laptop",
-          label: "LAPTOP TIER",
-          name: "Dell Latitude Core i5",
-          spec: "8GB RAM / 256GB SSD",
-          feeText: "Entry Fee: PKR 200",
-          codePrefix: "GLD",
-          img: "data:image/svg+xml;utf8," + encodeURIComponent(
-            '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#e2e8f0"/><rect x="65" y="24" width="190" height="112" rx="8" fill="#1e293b"/><rect x="75" y="34" width="170" height="90" fill="#38bdf8"/><rect x="38" y="138" width="244" height="14" rx="5" fill="#64748b"/><text x="160" y="84" fill="#0f172a" font-size="13" font-family="sans-serif" font-weight="bold" text-anchor="middle">Latitude i5</text></svg>'
-          )
-        }
+      var defaultLaptopImg =
+        '<svg xmlns="http://www.w3.org/2000/svg" width="320" height="180" viewBox="0 0 320 180"><rect width="320" height="180" rx="12" fill="#e2e8f0"/><rect x="65" y="24" width="190" height="112" rx="8" fill="#1e293b"/><rect x="75" y="34" width="170" height="90" fill="#38bdf8"/><rect x="38" y="138" width="244" height="14" rx="5" fill="#64748b"/><text x="160" y="84" fill="#0f172a" font-size="13" font-family="sans-serif" font-weight="bold" text-anchor="middle">Latitude i5</text></svg>';
+
+      var initialEntries = [
+        { id: "e-1", name: "Ali Raza", tierLabel: "Laptop Tier • 0300****312", code: "#GLD-4821", verified: true },
+        { id: "e-2", name: "Sana Malik", tierLabel: "Mobile Phone Tier • 0321****549", code: "#SLV-1093", verified: true },
+        { id: "e-3", name: "Hamza Khan", tierLabel: "Mobile Phone Tier • 0345****781", code: "#SLV-7342", verified: false }
       ];
 
-      const initialEntries = [
-        { name: "Ali Raza", tierLabel: "Laptop Tier • 0300****312", code: "#GLD-4821", isGold: true },
-        { name: "Sana Malik", tierLabel: "Mobile Phone Tier • 0321****549", code: "#SLV-1093", isGold: false },
-        { name: "Hamza Khan", tierLabel: "Mobile Phone Tier • 0345****781", code: "#SLV-7342", isGold: false }
-      ];
-
-      function loadData() {
-        try {
-          const raw = localStorage.getItem(STORAGE_KEY);
-          if (!raw) {
-            return {
-              selectedTierId: "mobile",
-              method: "JAZZCASH",
-              number: "03442900408",
-              title: "Tahir Abbas",
-              entries: initialEntries.slice()
-            };
-          }
-          const d = JSON.parse(raw);
-          return {
-            selectedTierId: d.selectedTierId || "mobile",
-            method: d.method || "JAZZCASH",
-            number: d.number || "03442900408",
-            title: d.title || "Tahir Abbas",
-            entries: Array.isArray(d.entries) && d.entries.length ? d.entries : initialEntries.slice()
-          };
-        } catch (e) {
-          return {
-            selectedTierId: "mobile",
-            method: "JAZZCASH",
-            number: "03442900408",
-            title: "Tahir Abbas",
-            entries: initialEntries.slice()
-          };
-        }
+      function getDefaultData() {
+        return {
+          selectedTierId: "mobile",
+          method: "JAZZCASH",
+          number: "03442900408",
+          title: "Tahir Abbas",
+          mobileImgUrl: "",
+          laptopImgUrl: "",
+          entries: initialEntries.slice()
+        };
       }
 
-      let appData = loadData();
+      var appData = getDefaultData();
+      try {
+        var raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            appData.selectedTierId = parsed.selectedTierId || "mobile";
+            appData.method = parsed.method || "JAZZCASH";
+            appData.number = parsed.number || "03442900408";
+            appData.title = parsed.title || "Tahir Abbas";
+            appData.mobileImgUrl = parsed.mobileImgUrl || "";
+            appData.laptopImgUrl = parsed.laptopImgUrl || "";
+            if (Array.isArray(parsed.entries) && parsed.entries.length) {
+              appData.entries = parsed.entries;
+            }
+          }
+        }
+      } catch (e) {}
 
       function saveData() {
         try {
@@ -421,12 +481,94 @@
         } catch (e) {}
       }
 
+      function imgSrcFromValue(customUrl, fallbackSvg) {
+        if (customUrl && customUrl.trim() !== "") {
+          return customUrl.trim();
+        }
+        return "data:image/svg+xml;utf8," + encodeURIComponent(fallbackSvg);
+      }
+
+      function getTiers() {
+        return [
+          {
+            id: "mobile",
+            label: "MOBILE PHONE TIER",
+            name: "Redmi 14C",
+            spec: "6GB RAM / 128GB",
+            feeText: "Entry Fee: PKR 100",
+            codePrefix: "SLV",
+            img: imgSrcFromValue(appData.mobileImgUrl, defaultMobileImg)
+          },
+          {
+            id: "laptop",
+            label: "LAPTOP TIER",
+            name: "Dell Latitude Core i5",
+            spec: "8GB RAM / 256GB SSD",
+            feeText: "Entry Fee: PKR 200",
+            codePrefix: "GLD",
+            img: imgSrcFromValue(appData.laptopImgUrl, defaultLaptopImg)
+          }
+        ];
+      }
+
       function maskPhone(p) {
-        const digits = p.replace(/\s+/g, "");
+        var digits = (p || "").replace(/\s+/g, "");
         if (digits.length >= 7) {
           return digits.slice(0, 4) + "****" + digits.slice(-3);
         }
         return digits;
+      }
+
+      function renderAdminEntries() {
+        var box = document.getElementById("adminEntriesBox");
+        if (!box) return;
+        if (!appData.entries.length) {
+          box.innerHTML = '<div class="card-sub">No entries found.</div>';
+          return;
+        }
+        box.innerHTML = appData.entries.map(function (item) {
+          return (
+            '<div class="admin-entry-box">' +
+              '<div><strong>' + item.name + '</strong> • ' + item.code + '</div>' +
+              '<div class="entry-sub">' + item.tierLabel + '</div>' +
+              '<div class="entry-sub" style="font-weight:700;color:' + (item.verified ? '#15803d' : '#b45309') + ';">' +
+                (item.verified ? 'Payment Verified' : 'Pending Verification') +
+              '</div>' +
+              '<div class="admin-actions">' +
+                '<button type="button" class="btn-verify" data-v="' + item.id + '">' + (item.verified ? 'Verified ✓' : 'Verify Payment') + '</button>' +
+                '<button type="button" class="btn-reject" data-r="' + item.id + '">Reject</button>' +
+              '</div>' +
+            '</div>'
+          );
+        }).join("");
+
+        var vBtns = box.querySelectorAll("[data-v]");
+        for (var i = 0; i < vBtns.length; i++) {
+          vBtns[i].addEventListener("click", function () {
+            var id = this.getAttribute("data-v");
+            for (var j = 0; j < appData.entries.length; j++) {
+              if (appData.entries[j].id === id) {
+                appData.entries[j].verified = true;
+              }
+            }
+            saveData();
+            render();
+          });
+        }
+
+        var rBtns = box.querySelectorAll("[data-r]");
+        for (var k = 0; k < rBtns.length; k++) {
+          rBtns[k].addEventListener("click", function () {
+            var id = this.getAttribute("data-r");
+            var next = [];
+            for (var m = 0; m < appData.entries.length; m++) {
+              if (appData.entries[m].id !== id) next.push(appData.entries[m]);
+            }
+            appData.entries = next;
+            saveData();
+            render();
+          });
+        }
       }
 
       function render() {
@@ -434,150 +576,36 @@
         document.getElementById("dispNumber").textContent = appData.number;
         document.getElementById("dispTitle").textContent = "Title: " + appData.title;
 
-        const tiersEl = document.getElementById("tiersContainer");
-        tiersEl.innerHTML = "";
-        tiers.forEach(function (tier) {
-          const isSel = appData.selectedTierId === tier.id;
-          const card = document.createElement("div");
-          card.className = "tier-card" + (isSel ? " selected" : "");
-          card.innerHTML =
-            '<div>' +
-              '<img class="tier-img" src="' + tier.img + '" alt="' + tier.name + '" />' +
-              '<div class="tier-label">' + tier.label + '</div>' +
-              '<div class="tier-name">' + tier.name + '</div>' +
-              '<div class="tier-spec">' + tier.spec + '</div>' +
-            '</div>' +
-            '<div>' +
-              '<span class="fee-badge">' + tier.feeText + '</span>' +
-              (isSel ? '<div class="selected-txt">Selected</div>' : '') +
+        var tiers = getTiers();
+        var tiersEl = document.getElementById("tiersContainer");
+        var html = "";
+        for (var i = 0; i < tiers.length; i++) {
+          var tier = tiers[i];
+          var isSel = appData.selectedTierId === tier.id;
+          html +=
+            '<div class="tier-card' + (isSel ? ' selected' : '') + '" data-tier="' + tier.id + '">' +
+              '<div>' +
+                '<img class="tier-img" src="' + tier.img + '" alt="' + tier.name + '" />' +
+                '<div class="tier-label">' + tier.label + '</div>' +
+                '<div class="tier-name">' + tier.name + '</div>' +
+                '<div class="tier-spec">' + tier.spec + '</div>' +
+              '</div>' +
+              '<div>' +
+                '<span class="fee-badge">' + tier.feeText + '</span>' +
+                (isSel ? '<div class="selected-txt">Selected</div>' : '') +
+              '</div>' +
             '</div>';
-          card.addEventListener("click", function () {
-            appData.selectedTierId = tier.id;
+        }
+        tiersEl.innerHTML = html;
+
+        var cards = tiersEl.querySelectorAll("[data-tier]");
+        for (var c = 0; c < cards.length; c++) {
+          cards[c].addEventListener("click", function () {
+            appData.selectedTierId = this.getAttribute("data-tier");
             saveData();
             render();
           });
-          tiersEl.appendChild(card);
-        });
-
-        const activeTier = tiers.find(function (t) { return t.id === appData.selectedTierId; }) || tiers[0];
-        document.getElementById("activeTierText").textContent =
-          "Joining " + activeTier.label.toLowerCase().replace(/\b\w/g, function (c) { return c.toUpperCase(); }) + " (" + activeTier.name + ")";
-
-        const recentEl = document.getElementById("recentEntriesList");
-        const partEl = document.getElementById("participantsList");
-
-        recentEl.innerHTML = appData.entries.map(function (item) {
-          return (
-            '<div class="entry-item">' +
-              '<div>' +
-                '<div class="entry-name">' + item.name + '</div>' +
-                '<div class="entry-sub">' + item.tierLabel + '</div>' +
-              '</div>' +
-              '<span class="code-pill' + (item.isGold ? '' : ' silver') + '">' + item.code + '</span>' +
-            '</div>'
-          );
-        }).join("");
-
-        partEl.innerHTML = appData.entries.map(function (item) {
-          return (
-            '<div class="entry-item">' +
-              '<div class="entry-name">' + item.name + '</div>' +
-              '<span class="code-pill' + (item.isGold ? '' : ' silver') + '">' + item.code + '</span>' +
-            '</div>'
-          );
-        }).join("");
-      }
-
-      document.getElementById("enterDrawBtn").addEventListener("click", function (e) {
-        e.stopPropagation();
-        document.getElementById("slipFormCard").scrollIntoView({ behavior: "smooth" });
-      });
-
-      document.getElementById("copyNumBtn").addEventListener("click", function () {
-        const num = appData.number;
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(num).then(function () {
-            alert("Copied: " + num);
-          }).catch(function () {
-            prompt("Copy number:", num);
-          });
-        } else {
-          prompt("Copy number:", num);
-        }
-      });
-
-      document.getElementById("genSlipBtn").addEventListener("click", function () {
-        const name = document.getElementById("fullName").value.trim();
-        const wa = document.getElementById("waNumber").value.trim();
-        const trx = document.getElementById("trxId").value.trim();
-        const agreed = document.getElementById("termsCheck").checked;
-
-        if (!name || !wa || !trx) {
-          alert("Please enter your name, WhatsApp number, and Transaction ID.");
-          return;
-        }
-        if (!agreed) {
-          alert("Please accept Terms & Conditions first.");
-          return;
         }
 
-        const tier = tiers.find(function (t) { return t.id === appData.selectedTierId; }) || tiers[0];
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const code = "#" + tier.codePrefix + "-" + randomNum;
-
-        const newEntry = {
-          name: name,
-          tierLabel: tier.name + " • " + maskPhone(wa),
-          code: code,
-          isGold: tier.id === "laptop"
-        };
-
-        appData.entries.unshift(newEntry);
-        saveData();
-        render();
-
-        document.getElementById("latestSlipBox").innerHTML =
-          '<div class="slip-box">' +
-            '<strong>Digital Slip Generated (' + code + ')</strong><br/>' +
-            'Name: ' + name + ' | WhatsApp: ' + wa + '<br/>' +
-            'Tier: ' + tier.name + ' (' + tier.feeText + ') | TRX ID: ' + trx +
-          '</div>';
-
-        document.getElementById("fullName").value = "";
-        document.getElementById("waNumber").value = "";
-        document.getElementById("trxId").value = "";
-        document.getElementById("termsCheck").checked = false;
-      });
-
-      let taps = 0;
-      let tapTimer = null;
-      document.getElementById("topBrand").addEventListener("click", function () {
-        taps += 1;
-        clearTimeout(tapTimer);
-        tapTimer = setTimeout(function () { taps = 0; }, 1500);
-        if (taps >= 5) {
-          taps = 0;
-          const card = document.getElementById("adminLoginCard");
-          card.classList.remove("hidden");
-          card.scrollIntoView({ behavior: "smooth" });
-        }
-      });
-
-      document.getElementById("unlockAdminBtn").addEventListener("click", function () {
-        const pin = document.getElementById("adminPinInput").value.trim();
-        if (pin === ADMIN_PIN) {
-          document.getElementById("adminControls").classList.remove("hidden");
-          document.getElementById("editAccountNum").value = appData.number;
-          document.getElementById("editAccountTitle").value = appData.title;
-        } else {
-          alert("Invalid PIN.");
-        }
-      });
-
-      document.getElementById("saveAccountBtn").addEventListener("click", function () {
-        const newNum = document.getElementById("editAccountNum").value.trim();
-        const newTitle = document.getElementById("editAccountTitle").value.trim();
-        if (newNum) appData.number = newNum;
-        if (newTitle) appData.title = newTitle;
-        saveData();
-        render
+        var activeTier = tiers[0];
+        for (var t = 0; 
